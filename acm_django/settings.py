@@ -51,7 +51,6 @@ _env_csrf_origins = {
 CSRF_TRUSTED_ORIGINS = sorted(_default_csrf_origins | _env_csrf_origins)
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-IS_VERCEL = os.getenv('VERCEL') == '1'
 
 
 # Application definition
@@ -159,12 +158,8 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_files')
 
-if IS_VERCEL:
-    # On Vercel, serve static files via Django + WhiteNoise without manifest coupling.
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-    WHITENOISE_USE_FINDERS = True
-else:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+WHITENOISE_USE_FINDERS = True
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
