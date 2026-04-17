@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +22,35 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k1dn)pkpj115f%0l8+!s#&a5os1op@tn9@az9i!yl&px^e3n=7'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-k1dn)pkpj115f%0l8+!s#&a5os1op@tn9@az9i!yl&px^e3n=7',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['acmnmims.pythonanywhere.com', 'acm-django.onrender.com', '127.0.0.1']
+_default_allowed_hosts = {
+    'acmnmims.pythonanywhere.com',
+    'acm-django.onrender.com',
+    '127.0.0.1',
+    'localhost',
+    '.vercel.app',
+}
+_env_allowed_hosts = {
+    host.strip() for host in os.getenv('ALLOWED_HOSTS', '').split(',') if host.strip()
+}
+ALLOWED_HOSTS = sorted(_default_allowed_hosts | _env_allowed_hosts)
+
+_default_csrf_origins = {'https://*.vercel.app'}
+_env_csrf_origins = {
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+}
+CSRF_TRUSTED_ORIGINS = sorted(_default_csrf_origins | _env_csrf_origins)
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -77,12 +101,23 @@ WSGI_APPLICATION = 'acm_django.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
